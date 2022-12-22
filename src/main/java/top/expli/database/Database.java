@@ -9,14 +9,14 @@ import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Database {
-    BasicDataSource db_source;
-
-    public Database() {
-        db_source = new BasicDataSource();
-        db_source.setUrl(config.url);
-        db_source.setUsername(config.username);
-        db_source.setPassword(config.passwd);
-    }
+//    BasicDataSource db_source;
+//
+//    public Database() {
+//        db_source = new BasicDataSource();
+//        db_source.setUrl(config.url);
+//        db_source.setUsername(config.username);
+//        db_source.setPassword(config.passwd);
+//    }
 
 
 }
