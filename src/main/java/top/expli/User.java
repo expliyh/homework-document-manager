@@ -21,12 +21,6 @@ public class User implements java.io.Serializable {
 
     }
 
-    public String token_refresh(String access_token) throws AuthFailed, TokenAuthFailed {
-        if (Token.auth(access_token)) {
-            return Token.tokenGet(this);
-        } else throw new AuthFailed(knives.random());
-    }
-
     public void setRefreshToken(String passwd) {
         this.refresh_token = Token.sha256(passwd);
     }
