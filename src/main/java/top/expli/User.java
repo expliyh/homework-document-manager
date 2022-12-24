@@ -29,12 +29,16 @@ public class User implements java.io.Serializable {
         return permission_level;
     }
 
+    public String getRefresh_token() {
+        return refresh_token;
+    }
+
     public String token_request(String refresh_token) throws AuthFailed {
         if (Objects.equals(refresh_token, this.refresh_token)) {
             return Token.tokenGet(this);
         } else {
             System.out.println(refresh_token);
-            System.out.println(Token.sha256("12345678"));
+//            System.out.println(Token.sha256("12345678"));
             System.out.println(this.refresh_token);
             throw new AuthFailed(knives.random());
         }

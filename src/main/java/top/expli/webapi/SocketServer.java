@@ -3,7 +3,6 @@ package top.expli.webapi;
 import top.expli.Config;
 import top.expli.Token;
 
-import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,12 +10,9 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.SocketImpl;
-import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class SocketServer extends ServerSocket {
     private ExecutorService pool;
@@ -27,7 +23,7 @@ public class SocketServer extends ServerSocket {
         try {
             while (true) {
                 Socket socket = accept();
-                RequestHandler handler = new RequestHandler(socket);
+                ClientConnector handler = new ClientConnector(socket);
                 pool.execute(handler);
             }
         } catch (IOException e) {
@@ -37,12 +33,29 @@ public class SocketServer extends ServerSocket {
         }
     }
 
-    class RequestHandler extends Thread {
+    class ClientConnector extends Thread {
         protected Socket client;
         protected BufferedReader reader;
         private PrintWriter printWriter;
+
+        public String getUserName() {
+            return userName;
+        }
+
+        public void setUserName(String userName) {
+            this.userName = userName;
+        }
+
+        public Integer getPermissionLevel() {
+            return permissionLevel;
+        }
+
+        public void setPermissionLevel(Integer permissionLevel) {
+            this.permissionLevel = permissionLevel;
+        }
+
         private String userName;
-        private String permissionLevel;
+        private Integer permissionLevel;
         private ScheduledExecutorService heartBeatChecker;
         private long lastHeartBeat;
         private long lastOperate;
@@ -69,7 +82,7 @@ public class SocketServer extends ServerSocket {
             System.out.println("Closed!");
         }
 
-        public RequestHandler(Socket client) throws IOException {
+        public ClientConnector(Socket client) throws IOException {
             this.client = client;
             this.reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
             this.printWriter = new PrintWriter(client.getOutputStream(), true);

@@ -26,6 +26,12 @@ public class cache_user {
         return user;
     }
 
+    public static void editUser(String username, String passwd, int permission) throws UserNotFound {
+        User usr = cache_user.findUser(username);
+        usr.setPermission_level(permission);
+        usr.setRefreshToken(passwd);
+    }
+
     public static void changePasswd(String userName, String newPasswd) {
         users.get(userName).setRefreshToken(newPasswd);
     }
