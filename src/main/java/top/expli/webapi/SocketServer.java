@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketImpl;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
@@ -37,8 +38,8 @@ public class SocketServer extends ServerSocket {
     }
 
     class RequestHandler extends Thread {
-        private Socket client;
-        private BufferedReader reader;
+        protected Socket client;
+        protected BufferedReader reader;
         private PrintWriter printWriter;
         private String userName;
         private String permissionLevel;
@@ -48,34 +49,24 @@ public class SocketServer extends ServerSocket {
 
         @Override
         public void run() {
-            lastHeartBeat = System.currentTimeMillis();
-            heartBeatChecker = Executors.newSingleThreadScheduledExecutor();
-            HeartBeatChecker checker = new HeartBeatChecker(this);
-            heartBeatChecker.scheduleWithFixedDelay(checker,0,20, TimeUnit.SECONDS);
             lastOperate = System.currentTimeMillis();
+            try {
+                client.setSoTimeout(10*1000);
+            } catch (SocketException e) {
+                throw new RuntimeException(e);
+            }
             while (true) {
                 System.out.println("New run " + Token.randomString(10));
                 try {
                     printWriter.println("Received: " + reader.readLine());
                 } catch (IOException e) {
-                    return;
+                    break;
+                }
+                if(this.isInterrupted()){
+                    break;
                 }
             }
-        }
-
-        class HeartBeatChecker extends Thread{
-            RequestHandler handler;
-            public HeartBeatChecker(RequestHandler handler){
-                this.handler = handler;
-            }
-            @Override
-            public void run() {
-                if(System.currentTimeMillis()-lastHeartBeat>10*1000){
-                    handler.interrupt();
-                }
-                System.out.println("Heart beat checked!");
-                System.out.println(handler.isInterrupted());
-            }
+            System.out.println("Closed!");
         }
 
         public RequestHandler(Socket client) throws IOException {
