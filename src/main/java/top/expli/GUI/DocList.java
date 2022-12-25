@@ -83,16 +83,18 @@ public class DocList {
     public void refresh() {
         Vector<Vector<String>> list;
         try {
-            list = Documents.getSimpleDocList(userName);
+            list = Documents.getDocumentList(userName);
         } catch (UserNotFound e) {
             ExceptionProcess.process(thisFrame, e);
             thisFrame.dispose();
             return;
         }
 
-        Vector<String> head = new Vector<>();
-        head.add("文件名");
+        Vector<String> head = new Vector<>(4);
+        head.add("文档名");
         head.add("作者");
+        head.add("权限");
+        head.add("简介");
         DefaultTableModel docModel = new DefaultTableModel(list, head) {
             @Override
             public boolean isCellEditable(int row, int column) {

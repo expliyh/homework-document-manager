@@ -15,6 +15,7 @@ public class Request {
     }
 
     public static class Operations {
+        public static final int HEARTBEAT = 6;
         public static final int LOGIN = 0;
         public static final int LOGOUT = 1;
         public static final int EXIT = -1;
