@@ -182,7 +182,29 @@ public class RequestHandler {
                         }
                     }
                     case Request.Operations.EDIT -> {
-
+                        String oldDocName = input.detail.get("oldDocName");
+                        String newDocName = input.detail.get("newDocName");
+                        String newPermissionLevel = input.detail.get("newPermissionLevel");
+                        String newDescription = input.detail.get("newDescription");
+                        if (newPermissionLevel == null || newDocName == null || oldDocName == null || newDescription == null) {
+                            return new Response(400);
+                        }
+                        try {
+                            int oldPermissionLevel = Documents.getPermissionLevel(oldDocName);
+                            if (connector.getPermissionLevel() > 3 && !Objects.equals(connector.getUserName(), Documents.getOwner(oldDocName))) {
+                                return new Response(403, new PermissionDenied());
+                            }
+                            if (Integer.parseInt(newPermissionLevel) < connector.getPermissionLevel()) {
+                                return new Response(400);
+                            }
+                            Documents.editDocPermission(oldDocName, Integer.parseInt(newPermissionLevel));
+                            Documents.editDocDescription(oldDocName, newDescription);
+                            Documents.editDocName(oldDocName, newDocName);
+                        } catch (DocumentNotFound e) {
+                            return new Response(404, e);
+                        } catch (NumberFormatException e) {
+                            return new Response(400, new BadFormat());
+                        }
                     }
                 }
             }

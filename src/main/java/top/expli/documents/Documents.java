@@ -43,7 +43,7 @@ public class Documents implements Serializable {
 
     public static int getPermissionLevel(String docName) throws DocumentNotFound {
         Document document = documents.get(docName);
-        if (document == null){
+        if (document == null) {
             throw new DocumentNotFound();
         }
         return document.getPermission_level();
@@ -55,8 +55,8 @@ public class Documents implements Serializable {
         if (outDoc == null) {
             throw new DocumentNotFound();
         }
-        File outFile = new File(path,outDoc.getContent());
-        if (!outFile.exists()){
+        File outFile = new File(path, outDoc.getContent());
+        if (!outFile.exists()) {
             throw new FileNotFound();
         }
         try (FileInputStream fileInputStream = new FileInputStream(outFile)) {
@@ -68,7 +68,7 @@ public class Documents implements Serializable {
 
     public static String getOwner(String docName) throws DocumentNotFound {
         Document document = documents.get(docName);
-        if (document == null){
+        if (document == null) {
             throw new DocumentNotFound();
         }
         return document.getOwner();
@@ -78,7 +78,7 @@ public class Documents implements Serializable {
         String path = "data/docs";
         File outFile = new File(path);
         outFile.mkdirs();
-        outFile = new File(path,Token.randomString(128));
+        outFile = new File(path, Token.randomString(128));
         while (outFile.exists()) {
             outFile = new File(path, Token.randomString(128));
         }
@@ -89,7 +89,7 @@ public class Documents implements Serializable {
         } catch (IOException e) {
             throw new IOException();
         }
-        Document document = new Document(user_name, permission_level, docName,fileName, outFile.getName(), description);
+        Document document = new Document(user_name, permission_level, docName, fileName, outFile.getName(), description);
         documents.put(docName, document);
     }
 
@@ -97,12 +97,12 @@ public class Documents implements Serializable {
         String path = "data/docs";
         File outFile = new File(path);
         outFile.mkdirs();
-        outFile = new File(path,Token.randomString(128));
+        outFile = new File(path, Token.randomString(128));
         while (outFile.exists()) {
             outFile = new File(path, Token.randomString(128));
         }
 
-        Files.copy(file.toPath(),outFile.toPath());
+        Files.copy(file.toPath(), outFile.toPath());
 
 //        try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
 //            try (FileInputStream inputStream = new FileInputStream(file)) {
@@ -111,17 +111,47 @@ public class Documents implements Serializable {
 //        } catch (IOException e) {
 //            throw new FileNotFound(knives.random());
 //        }
-        Document document = new Document(user_name, permission_level, docName,file.getName(), outFile.getName(), description);
+        Document document = new Document(user_name, permission_level, docName, file.getName(), outFile.getName(), description);
         documents.put(docName, document);
+    }
+
+    public static void editDocPermission(String docName, int permission) throws DocumentNotFound {
+        Document document = documents.get(docName);
+        if (document == null) {
+            throw new DocumentNotFound();
+        }
+        document.setPermission_level(permission);
+    }
+
+    public static void editDocDescription(String docName, String description) throws DocumentNotFound {
+        Document document = documents.get(docName);
+        if (document == null) {
+            throw new DocumentNotFound();
+        }
+        document.setDescription(description);
+    }
+
+    public static void editDocName(String oldDocName, String newDocName) throws DocumentNotFound {
+        if (Objects.equals(oldDocName, newDocName)) {
+            return;
+        }
+        Document document = documents.get(oldDocName);
+        if (document == null) {
+            throw new DocumentNotFound();
+        }
+        Document newDoc = new Document(document.getOwner(), document.getPermission_level(), newDocName, document.getFileName(), document.getContent(), document.getDescription());
+        documents.remove(oldDocName);
+        documents.put(newDocName, newDoc);
     }
 
     public static String getFileName(String docName) throws DocumentNotFound {
         Document document = documents.get(docName);
-        if (document == null){
+        if (document == null) {
             throw new DocumentNotFound();
         }
         return document.getFileName();
     }
+
     public static void saveAs(String path, String file_name) throws FileNotFound {
         String pathIn = "data/docs/";
         Document document = documents.get(file_name);
@@ -138,13 +168,13 @@ public class Documents implements Serializable {
 
     public static void deleteDocument(String fileName) throws FileNotFound {
         Document toDelete = Documents.documents.get(fileName);
-        if(toDelete==null){
+        if (toDelete == null) {
             throw new FileNotFound(knives.random());
         }
 
     }
 
-    public static void saveAs(File outFile,String file_name) throws FileNotFound {
+    public static void saveAs(File outFile, String file_name) throws FileNotFound {
         String pathIn = "data/docs/";
         Document document = documents.get(file_name);
         File inFile = new File(pathIn, document.getContent());
