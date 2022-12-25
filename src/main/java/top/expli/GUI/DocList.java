@@ -13,7 +13,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.Objects;
 import java.util.Vector;
 
 public class DocList {
@@ -84,7 +83,7 @@ public class DocList {
     public void refresh() {
         Vector<Vector<String>> list;
         try {
-            list = Documents.listDocument(userName);
+            list = Documents.getSimpleDocList(userName);
         } catch (UserNotFound e) {
             ExceptionProcess.process(thisFrame, e);
             thisFrame.dispose();

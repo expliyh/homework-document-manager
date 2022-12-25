@@ -1,15 +1,13 @@
 package top.expli.documents;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import top.expli.Permissions;
 import top.expli.Token;
-import top.expli.User;
 import top.expli.exceptions.*;
 import top.expli.knives;
 import top.expli.cache_user;
 
-import javax.print.Doc;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -22,7 +20,28 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Documents implements Serializable {
     public static final String savePath = "data/docs/";
 
-    public static Vector<Vector<String>> listDocument(String userName) throws UserNotFound {
+    public static Vector<Vector<String>> getDocumentList(String userName) throws UserNotFound {
+        int permissionLevel = cache_user.GetPermissionLevel(userName);
+        Vector<Vector<String>> vec = new Vector<>();
+        for (Map.Entry<String, Document> i : documents.entrySet()) {
+            System.out.println(i.getValue().getClass().getName());
+            if (Objects.equals(i.getValue().getOwner(), userName) || i.getValue().getPermission_level() > permissionLevel || i.getValue().getPermission_level() >= Permissions.PUBLIC) {
+                Vector<String> tmp = new Vector<>(4);
+                tmp.add(i.getKey());
+                tmp.add(i.getValue().getOwner());
+                tmp.add(Permissions.docPermissionToString(i.getValue().getPermission_level()));
+                String description = i.getValue().getDescription();
+                if(description.length()>8){
+                    description = description.substring(0,6)+"……";
+                }
+                tmp.add(description);
+                vec.add(tmp);
+            }
+        }
+        return vec;
+    }
+
+    public static Vector<Vector<String>> getSimpleDocList(String userName) throws UserNotFound {
         int permissionLevel = cache_user.GetPermissionLevel(userName);
         Vector<Vector<String>> vec = new Vector<>();
         for (Map.Entry<String, Document> i : documents.entrySet()) {
@@ -180,8 +199,8 @@ public class Documents implements Serializable {
         if (toDelete == null) {
             throw new DocumentNotFound();
         }
-        File fileToDelete = new File(savePath,toDelete.getContent());
-        if (!fileToDelete.delete()){
+        File fileToDelete = new File(savePath, toDelete.getContent());
+        if (!fileToDelete.delete()) {
             throw new ServerError();
         }
         documents.remove(toDelete.getDocName());

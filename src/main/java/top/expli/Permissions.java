@@ -11,4 +11,23 @@ public class Permissions {
     public static final int ADMINONLY = 3;
     public static final int PROTECTED = 4;
     public static final int PUBLIC = 5;
+    public static String docPermissionToString(int permission){
+        switch (permission){
+            case KERNEL -> {
+                return "P·A·I·M·O·N";
+            }
+            case ADMINONLY -> {
+                return "管理员";
+            }
+            case PROTECTED -> {
+                return "私有";
+            }
+            case PUBLIC -> {
+                return "公开";
+            }
+            default -> {
+                return "其他";
+            }
+        }
+    }
 }

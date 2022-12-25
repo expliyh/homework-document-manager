@@ -260,6 +260,13 @@ public class RequestHandler {
                             return new Response(404, e);
                         }
                     }
+                    case Request.Operations.LIST -> {
+                        try {
+                            return new Response(200, Documents.getDocumentList(connector.getUserName()));
+                        } catch (UserNotFound e) {
+                            return new Response(404, e);
+                        }
+                    }
                 }
             }
         }
