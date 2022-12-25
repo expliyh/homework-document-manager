@@ -9,6 +9,7 @@ import top.expli.exceptions.*;
 import top.expli.knives;
 import top.expli.webapi.SocketServer.ClientConnector;
 
+import javax.print.Doc;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
@@ -158,7 +159,7 @@ public class RequestHandler {
                             return new Response(500);
                         }
                     }
-                    case Request.Operations.GET -> {
+                    case Request.Operations.DOWNLOAD -> {
                         String docName = input.detail.get("docName");
                         if (docName == null) {
                             return new Response(400);
@@ -200,10 +201,37 @@ public class RequestHandler {
                             Documents.editDocPermission(oldDocName, Integer.parseInt(newPermissionLevel));
                             Documents.editDocDescription(oldDocName, newDescription);
                             Documents.editDocName(oldDocName, newDocName);
+                            return new Response(200);
                         } catch (DocumentNotFound e) {
                             return new Response(404, e);
                         } catch (NumberFormatException e) {
                             return new Response(400, new BadFormat());
+                        }
+                    }
+                    case Request.Operations.DELETE -> {
+                        String docName = input.detail.get("docName");
+                        if (docName == null) {
+                            return new Response(400);
+                        }
+                        try {
+                            if (Documents.getPermissionLevel(docName) < connector.getPermissionLevel()) {
+                                return new Response(403, new PermissionDenied());
+                            }
+                            if (connector.getPermissionLevel() <= 3) {
+                                if (Documents.getPermissionLevel(docName) == connector.getPermissionLevel() && !Objects.equals(Documents.getOwner(docName), connector.getUserName())) {
+                                    return new Response(403, new PermissionDenied());
+                                }
+                            } else if (connector.getPermissionLevel() > 4) {
+                                return new Response(403, new PermissionDenied());
+                            } else if (!Objects.equals(Documents.getOwner(docName), connector.getUserName())) {
+                                return new Response(403, new PermissionDenied());
+                            }
+                            Documents.deleteDocument(docName);
+                            return new Response(200);
+                        } catch (DocumentNotFound e) {
+                            return new Response(404, e);
+                        } catch (ServerError e) {
+                            return new Response(500);
                         }
                     }
                 }

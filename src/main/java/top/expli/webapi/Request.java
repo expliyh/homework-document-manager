@@ -23,6 +23,7 @@ public class Request {
         public static final int DELETE = 2;
         public static final int LIST = 3;
         public static final int EDIT = 4;
+        public static final int DOWNLOAD = 5;
     }
 
 }

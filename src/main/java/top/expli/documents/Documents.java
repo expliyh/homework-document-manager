@@ -20,6 +20,7 @@ import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Documents implements Serializable {
+    public static final String savePath = "data/docs/";
 
     public static Vector<Vector<String>> listDocument(String userName) throws UserNotFound {
         int permissionLevel = cache_user.GetPermissionLevel(userName);
@@ -166,12 +167,16 @@ public class Documents implements Serializable {
         }
     }
 
-    public static void deleteDocument(String fileName) throws FileNotFound {
-        Document toDelete = Documents.documents.get(fileName);
+    public static void deleteDocument(String docName) throws DocumentNotFound, ServerError {
+        Document toDelete = Documents.documents.get(docName);
         if (toDelete == null) {
-            throw new FileNotFound(knives.random());
+            throw new DocumentNotFound();
         }
-
+        File fileToDelete = new File(savePath,toDelete.getContent());
+        if (!fileToDelete.delete()){
+            throw new ServerError();
+        }
+        documents.remove(toDelete.getDocName());
     }
 
     public static void saveAs(File outFile, String file_name) throws FileNotFound {
