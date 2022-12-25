@@ -42,6 +42,14 @@ public class Documents implements Serializable {
         return vec;
     }
 
+    public static String getDescription(String docName) throws DocumentNotFound {
+        Document document = documents.get(docName);
+        if (document == null) {
+            throw new DocumentNotFound();
+        }
+        return document.getDescription();
+    }
+
     public static int getPermissionLevel(String docName) throws DocumentNotFound {
         Document document = documents.get(docName);
         if (document == null) {

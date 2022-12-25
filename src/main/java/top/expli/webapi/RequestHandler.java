@@ -13,6 +13,7 @@ import javax.print.Doc;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.*;
 
 public class RequestHandler {
@@ -232,6 +233,31 @@ public class RequestHandler {
                             return new Response(404, e);
                         } catch (ServerError e) {
                             return new Response(500);
+                        }
+                    }
+                    case Request.Operations.GET -> {
+                        String docName = input.detail.get("docName");
+                        if (docName == null) {
+                            return new Response(400);
+                        }
+                        try {
+                            int docPermission = Documents.getPermissionLevel(docName);
+                            String docOwner = Documents.getOwner(docName);
+                            if (docPermission < Permissions.PUBLIC) {
+                                if (docPermission < connector.getPermissionLevel()) {
+                                    return new Response(403, new PermissionDenied());
+                                } else if (docPermission == connector.getPermissionLevel() && !Objects.equals(docOwner, connector.getUserName())) {
+                                    return new Response(403, new PermissionDenied());
+                                }
+                            }
+                            Map<String, String> detail = new HashMap<>();
+                            detail.put("docName", docName);
+                            detail.put("docPermission", String.valueOf(docPermission));
+                            detail.put("docOwner", docOwner);
+                            detail.put("docDetail", Documents.getDescription(docName));
+                            return new Response(200, detail);
+                        } catch (DocumentNotFound e) {
+                            return new Response(404, e);
                         }
                     }
                 }
