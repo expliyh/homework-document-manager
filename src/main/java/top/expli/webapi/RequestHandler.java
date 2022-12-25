@@ -1,13 +1,18 @@
 package top.expli.webapi;
 
+import top.expli.GUI.SaveAll;
+import top.expli.Permissions;
 import top.expli.User;
 import top.expli.cache_user;
+import top.expli.documents.Documents;
 import top.expli.exceptions.*;
 import top.expli.knives;
 import top.expli.webapi.SocketServer.ClientConnector;
 
 import java.awt.event.ActionListener;
-import java.util.Objects;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 public class RequestHandler {
     public static Response process(Request input, ClientConnector connector) throws Exit {
@@ -28,10 +33,12 @@ public class RequestHandler {
                         }
                         connector.setUserName(usr.getUserName());
                         connector.setPermissionLevel(usr.getPermission_level());
+                        return new Response(200);
                     }
                     case Request.Operations.LOGOUT -> {
                         connector.setUserName(null);
                         connector.setPermissionLevel(null);
+                        return new Response(200, "logout");
                     }
                     case Request.Operations.EXIT -> {
                         throw new Exit();
@@ -104,14 +111,78 @@ public class RequestHandler {
                                 return new Response(403, new PermissionDenied(knives.random()));
                             }
                             cache_user.removeUser(userName);
-                            if (Objects.equals(userName, connector.getUserName())){
-                                return new Response(200,"logout");
-                            }else {
+                            if (Objects.equals(userName, connector.getUserName())) {
+                                return new Response(200, "logout");
+                            } else {
                                 return new Response(200);
                             }
                         } catch (UserNotFound e) {
                             return new Response(404, e);
                         }
+                    }
+                    case Request.Operations.LIST -> {
+                        if (connector.getPermissionLevel() > 3) {
+                            return new Response(403, new PermissionDenied(knives.random()));
+                        }
+                        return new Response(200, cache_user.getUserList());
+                    }
+                }
+            }
+            case Request.NameSpace.DOCUMENTS -> {
+                switch (input.operation) {
+                    case Request.Operations.ADD -> {
+                        String createTimeString = input.detail.get("createTime");
+                        String lastModifiedString = input.detail.get("lastModified");
+                        String docName = input.detail.get("docName");
+                        String fileName = input.detail.get("fileName");
+                        String description = input.detail.get("description");
+                        if (createTimeString == null || lastModifiedString == null || docName == null || fileName == null || description == null) {
+                            return new Response(400);
+                        }
+                        if (input.attachment == null) {
+                            return new Response(400);
+                        }
+                        Date createTime;
+                        Date lastModified;
+                        if (connector.getPermissionLevel() > 4) {
+                            return new Response(403, new PermissionDenied(knives.random()));
+                        }
+                        try {
+                            createTime = new Date(Long.parseLong(createTimeString));
+                            lastModified = new Date(Long.parseLong(lastModifiedString));
+                            Documents.addDocument(input.attachment, connector.getUserName(), connector.getPermissionLevel(), docName, fileName, description, createTime, lastModified);
+                            return new Response(200);
+                        } catch (NumberFormatException exception) {
+                            return new Response(400);
+                        } catch (IOException e) {
+                            return new Response(500);
+                        }
+                    }
+                    case Request.Operations.GET -> {
+                        String docName = input.detail.get("docName");
+                        if (docName == null) {
+                            return new Response(400);
+                        }
+                        int docPermissionLevel;
+                        String docOwner;
+                        try {
+                            docPermissionLevel = Documents.getPermissionLevel(docName);
+                            docOwner = Documents.getOwner(docName);
+                            if (docPermissionLevel < Permissions.PUBLIC) {
+                                if (docPermissionLevel <= connector.getPermissionLevel() && !Objects.equals(docOwner, connector.getUserName())) {
+                                    return new Response(403, new PermissionDenied());
+                                }
+                            }
+                            byte[] file = Documents.getBytesArray(docName);
+                            Map<String, String> detail = new HashMap<>();
+                            detail.put("fileName", Documents.getFileName(docName));
+                            return new Response(200, file, detail);
+                        } catch (DocumentNotFound | FileNotFound e) {
+                            return new Response(404, new DocumentNotFound());
+                        }
+                    }
+                    case Request.Operations.EDIT -> {
+
                     }
                 }
             }

@@ -13,7 +13,28 @@ public class Response {
     }
     public int code;
     public KnifeException exception;
-    String message;
+
+    public Response(int code, byte[] attachment, Map<String, String> detail) {
+        this.code = code;
+        this.attachment = attachment;
+        this.detail = detail;
+    }
+
+    public byte[] getAttachment() {
+        return attachment;
+    }
+
+    public void setAttachment(byte[] attachment) {
+        this.attachment = attachment;
+    }
+
+    private byte[] attachment;
+    public String message;
+
+    public Response(int code, Vector<Vector<String>> listDetail) {
+        this.code = code;
+        this.listDetail = listDetail;
+    }
 
     public Response(int code, String message) {
         this.code = code;

@@ -5,7 +5,7 @@ import java.io.FileNotFoundException;
 public class FileNotFound extends KnifeException {
     private String message;
 
-    FileNotFound() {
+    public FileNotFound() {
         super();
     }
 

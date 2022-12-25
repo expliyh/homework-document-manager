@@ -6,6 +6,7 @@ public class Request {
     public int nameSpace;
     public int operation;
     public Map<String, String> detail;
+    public byte[] attachment;
 
     public static class NameSpace {
         public static final int SYSTEM = 0;

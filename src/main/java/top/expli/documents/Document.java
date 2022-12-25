@@ -26,7 +26,7 @@ public class Document implements Serializable {
         this.docName = docName;
     }
 
-    Document(String owner, int permission_level, String docName, String fileName, String content, String description, BasicFileAttributes attributes) {
+    Document(String owner, int permission_level, String docName, String fileName, String content, String description) {
         this.owner = owner;
         this.permission_level = permission_level;
         this.content = content;

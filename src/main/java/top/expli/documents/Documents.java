@@ -5,15 +5,15 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import top.expli.Token;
 import top.expli.User;
-import top.expli.exceptions.FileNotFound;
-import top.expli.exceptions.JsonDecodeFail;
-import top.expli.exceptions.UserNotFound;
+import top.expli.exceptions.*;
 import top.expli.knives;
 import top.expli.cache_user;
 
+import javax.print.Doc;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Vector;
@@ -41,6 +41,58 @@ public class Documents implements Serializable {
         return vec;
     }
 
+    public static int getPermissionLevel(String docName) throws DocumentNotFound {
+        Document document = documents.get(docName);
+        if (document == null){
+            throw new DocumentNotFound();
+        }
+        return document.getPermission_level();
+    }
+
+    public static byte[] getBytesArray(String docName) throws DocumentNotFound, FileNotFound {
+        String path = "data/docs";
+        Document outDoc = documents.get(docName);
+        if (outDoc == null) {
+            throw new DocumentNotFound();
+        }
+        File outFile = new File(path,outDoc.getContent());
+        if (!outFile.exists()){
+            throw new FileNotFound();
+        }
+        try (FileInputStream fileInputStream = new FileInputStream(outFile)) {
+            return fileInputStream.readAllBytes();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String getOwner(String docName) throws DocumentNotFound {
+        Document document = documents.get(docName);
+        if (document == null){
+            throw new DocumentNotFound();
+        }
+        return document.getOwner();
+    }
+
+    public static void addDocument(byte[] file, String user_name, int permission_level, String docName, String fileName, String description, Date createTime, Date lastModified) throws IOException {
+        String path = "data/docs";
+        File outFile = new File(path);
+        outFile.mkdirs();
+        outFile = new File(path,Token.randomString(128));
+        while (outFile.exists()) {
+            outFile = new File(path, Token.randomString(128));
+        }
+        outFile.createNewFile();
+        try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
+            outputStream.write(file);
+            outFile.setLastModified(lastModified.getTime());
+        } catch (IOException e) {
+            throw new IOException();
+        }
+        Document document = new Document(user_name, permission_level, docName,fileName, outFile.getName(), description);
+        documents.put(docName, document);
+    }
+
     public static void addDocument(File file, String user_name, int permission_level, String docName, String description, BasicFileAttributes attributes) throws FileNotFound, IOException {
         String path = "data/docs";
         File outFile = new File(path);
@@ -59,10 +111,17 @@ public class Documents implements Serializable {
 //        } catch (IOException e) {
 //            throw new FileNotFound(knives.random());
 //        }
-        Document document = new Document(user_name, permission_level, docName,file.getName(), outFile.getName(), description, Files.readAttributes(file.toPath(), BasicFileAttributes.class));
-        documents.put(file.getName(), document);
+        Document document = new Document(user_name, permission_level, docName,file.getName(), outFile.getName(), description);
+        documents.put(docName, document);
     }
 
+    public static String getFileName(String docName) throws DocumentNotFound {
+        Document document = documents.get(docName);
+        if (document == null){
+            throw new DocumentNotFound();
+        }
+        return document.getFileName();
+    }
     public static void saveAs(String path, String file_name) throws FileNotFound {
         String pathIn = "data/docs/";
         Document document = documents.get(file_name);
