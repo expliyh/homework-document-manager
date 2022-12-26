@@ -29,7 +29,9 @@ public class cache_user {
     public static void editUser(String username, String passwd, int permission) throws UserNotFound {
         User usr = cache_user.findUser(username);
         usr.setPermission_level(permission);
-        usr.setRefreshToken(passwd);
+        if(passwd!=null){
+            usr.setRefreshToken(passwd);
+        }
     }
 
     public static void changePasswd(String userName, String newPasswd) {
@@ -141,7 +143,7 @@ public class cache_user {
             users.put("demo", new User("demo", "123456", 4));
         }
         if (!isUserExists("guest")) {
-            users.put("guest", new User("guest", "", 10086));
+            users.put("guest", new User("guest", "", 5));
         }
     }
 

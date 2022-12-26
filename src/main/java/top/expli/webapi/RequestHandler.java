@@ -1,12 +1,9 @@
 package top.expli.webapi;
 
+import top.expli.*;
 import top.expli.GUI.SaveAll;
-import top.expli.Permissions;
-import top.expli.User;
-import top.expli.cache_user;
 import top.expli.documents.Documents;
 import top.expli.exceptions.*;
-import top.expli.knives;
 import top.expli.webapi.SocketServer.ClientConnector;
 
 import javax.print.Doc;
@@ -18,8 +15,10 @@ import java.util.*;
 
 public class RequestHandler {
     public static Response process(Request input, ClientConnector connector) throws Exit {
-        if (connector.getUserName() == null || connector.getPermissionLevel() == null) {
-            return new Response(401);
+        if(input.getNameSpace()!=0&&input.getOperation()!=0){
+            if (connector.getUserName() == null || connector.getPermissionLevel() == null) {
+                return new Response(401);
+            }
         }
         switch (input.nameSpace) {
             case Request.NameSpace.SYSTEM -> {
@@ -29,12 +28,16 @@ public class RequestHandler {
                         try {
                             usr = cache_user.login(input.detail.get("userName"), input.detail.get("password"));
                         } catch (AuthFailed e) {
+                            ConsoleLog.log(e.toString());
                             return new Response(401, e);
                         } catch (UserNotFound e) {
+                            ConsoleLog.log(e.toString());
                             return new Response(404, e);
                         }
                         connector.setUserName(usr.getUserName());
                         connector.setPermissionLevel(usr.getPermission_level());
+                        ConsoleLog.log("Login success");
+                        ConsoleLog.log(connector.getUserName()+connector.getPermissionLevel().toString());
                         return new Response(200);
                     }
                     case Request.Operations.LOGOUT -> {
@@ -86,7 +89,7 @@ public class RequestHandler {
                             return new Response(404, e);
                         }
 
-                        if (userName == null || password == null || permissionLevel == null) {
+                        if (userName == null || permissionLevel == null) {
                             return new Response(400);
                         }
                         try {
@@ -100,6 +103,7 @@ public class RequestHandler {
                             if (userName.equals(connector.getUserName())) {
                                 connector.setPermissionLevel(Integer.parseInt(permissionLevel));
                             }
+                            return new Response(200);
                         } catch (NumberFormatException ex) {
                             return new Response(400, new BadFormat(knives.random()));
                         } catch (UserNotFound e) {
@@ -128,31 +132,56 @@ public class RequestHandler {
                         }
                         return new Response(200, cache_user.getUserList());
                     }
+                    case Request.Operations.GET -> {
+                        if (!Objects.equals(connector.getUserName(), input.detail.get("userName"))) {
+                            try {
+                                if (connector.getPermissionLevel() >= cache_user.GetPermissionLevel(input.detail.get("userName"))) {
+                                    ConsoleLog.log(connector.getPermissionLevel().toString());
+                                    return new Response(403,new PermissionDenied());
+                                }
+                            } catch (UserNotFound e) {
+                                return new Response(404, e);
+                            }
+                        }
+                        try {
+                            HashMap<String,String> detail = new HashMap<>();
+                            detail.put("userName",input.detail.get("userName"));
+                            detail.put("permissionLevel",String.valueOf(cache_user.GetPermissionLevel(input.detail.get("userName"))));
+                            return new Response(200,detail);
+                        } catch (UserNotFound e) {
+                            return new Response(404,e);
+                        }
+                    }
                 }
             }
             case Request.NameSpace.DOCUMENTS -> {
                 switch (input.operation) {
                     case Request.Operations.ADD -> {
-                        String createTimeString = input.detail.get("createTime");
                         String lastModifiedString = input.detail.get("lastModified");
                         String docName = input.detail.get("docName");
                         String fileName = input.detail.get("fileName");
                         String description = input.detail.get("description");
-                        if (createTimeString == null || lastModifiedString == null || docName == null || fileName == null || description == null) {
+                        String permissionLevelStr = input.detail.get("permissionLevel");
+                        int permissionLevel;
+                        try {
+                            permissionLevel = Integer.parseInt(permissionLevelStr);
+                        } catch (NumberFormatException ex) {
+                            return new Response(400);
+                        }
+                        Date createTime = null;
+                        if (lastModifiedString == null || docName == null || fileName == null || description == null) {
                             return new Response(400);
                         }
                         if (input.attachment == null) {
                             return new Response(400);
                         }
-                        Date createTime;
                         Date lastModified;
-                        if (connector.getPermissionLevel() > 4) {
+                        if (connector.getPermissionLevel() > 4 || connector.getPermissionLevel() > permissionLevel) {
                             return new Response(403, new PermissionDenied(knives.random()));
                         }
                         try {
-                            createTime = new Date(Long.parseLong(createTimeString));
                             lastModified = new Date(Long.parseLong(lastModifiedString));
-                            Documents.addDocument(input.attachment, connector.getUserName(), connector.getPermissionLevel(), docName, fileName, description, createTime, lastModified);
+                            Documents.addDocument(input.attachment, connector.getUserName(), permissionLevel, docName, fileName, description, createTime, lastModified);
                             return new Response(200);
                         } catch (NumberFormatException exception) {
                             return new Response(400);
@@ -176,7 +205,7 @@ public class RequestHandler {
                                 }
                             }
                             byte[] file = Documents.getBytesArray(docName);
-                            Map<String, String> detail = new HashMap<>();
+                            HashMap<String, String> detail = new HashMap<>();
                             detail.put("fileName", Documents.getFileName(docName));
                             return new Response(200, file, detail);
                         } catch (DocumentNotFound | FileNotFound e) {
@@ -250,7 +279,7 @@ public class RequestHandler {
                                     return new Response(403, new PermissionDenied());
                                 }
                             }
-                            Map<String, String> detail = new HashMap<>();
+                            HashMap<String, String> detail = new HashMap<>();
                             detail.put("docName", docName);
                             detail.put("docPermission", String.valueOf(docPermission));
                             detail.put("docOwner", docOwner);

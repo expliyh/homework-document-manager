@@ -1,15 +1,14 @@
 package top.expli.webapi;
-
 import top.expli.Config;
+import top.expli.ConsoleLog;
 import top.expli.Token;
+import top.expli.exceptions.Exit;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -35,8 +34,8 @@ public class SocketServer extends ServerSocket {
 
     class ClientConnector extends Thread {
         protected Socket client;
-        protected BufferedReader reader;
-        private PrintWriter printWriter;
+        protected ObjectInputStream reader;
+        private ObjectOutputStream printWriter;
 
         public String getUserName() {
             return userName;
@@ -64,18 +63,25 @@ public class SocketServer extends ServerSocket {
         public void run() {
             lastOperate = System.currentTimeMillis();
             try {
-                client.setSoTimeout(10*1000);
+                client.setSoTimeout(10 * 1000);
             } catch (SocketException e) {
                 throw new RuntimeException(e);
             }
             while (true) {
                 System.out.println("New run " + Token.randomString(10));
                 try {
-                    printWriter.println("Received: " + reader.readLine());
-                } catch (IOException e) {
-                    break;
+                    Request input = (Request) reader.readObject();
+                    System.out.println("Received: " + input);
+                    Response response = RequestHandler.process(input,this);
+                    printWriter.writeObject(response);
+                    printWriter.flush();
+                    ConsoleLog.log(response.toString());
+                } catch (IOException | Exit e) {
+                    throw new RuntimeException(e);
+                } catch (ClassNotFoundException e) {
+                    throw new RuntimeException(e);
                 }
-                if(this.isInterrupted()){
+                if (this.isInterrupted()) {
                     break;
                 }
             }
@@ -84,8 +90,8 @@ public class SocketServer extends ServerSocket {
 
         public ClientConnector(Socket client) throws IOException {
             this.client = client;
-            this.reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            this.printWriter = new PrintWriter(client.getOutputStream(), true);
+            this.reader = new ObjectInputStream(client.getInputStream());
+            this.printWriter = new ObjectOutputStream(client.getOutputStream());
             System.out.println("New client connected!");
         }
     }

@@ -3,10 +3,12 @@ package top.expli.webapi;
 import top.expli.Main;
 import top.expli.exceptions.KnifeException;
 
-import java.util.Map;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Vector;
 
-public class Response {
+public class Response implements Serializable {
     public Response(int code,KnifeException exception){
         this.code = code;
         this.exception = exception;
@@ -14,15 +16,27 @@ public class Response {
     private int code;
     private KnifeException exception;
 
-    public Response(int code, Map<String, String> detail) {
+    public Response(int code, HashMap<String, String> detail) {
         this.code = code;
         this.detail = detail;
     }
 
-    public Response(int code, byte[] attachment, Map<String, String> detail) {
+    public Response(int code, byte[] attachment, HashMap<String, String> detail) {
         this.code = code;
         this.attachment = attachment;
         this.detail = detail;
+    }
+
+    @Override
+    public String toString() {
+        return "Response{" +
+                "code=" + code +
+                ", exception=" + exception +
+                ", attachment=" + Arrays.toString(attachment) +
+                ", message='" + message + '\'' +
+                ", detail=" + detail +
+                ", listDetail=" + listDetail +
+                '}';
     }
 
     public int getCode() {
@@ -49,11 +63,11 @@ public class Response {
         this.message = message;
     }
 
-    public Map<String, String> getDetail() {
+    public HashMap<String, String> getDetail() {
         return detail;
     }
 
-    public void setDetail(Map<String, String> detail) {
+    public void setDetail(HashMap<String, String> detail) {
         this.detail = detail;
     }
 
@@ -86,7 +100,7 @@ public class Response {
         this.message = message;
     }
 
-    private Map<String,String> detail;
+    private HashMap<String,String> detail;
     private Vector<Vector<String>> listDetail;
 
     public Response(int code) {

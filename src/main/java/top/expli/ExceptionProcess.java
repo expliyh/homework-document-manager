@@ -14,6 +14,10 @@ public class ExceptionProcess {
             case "top.expli.exceptions.FileNotFound"->{
                 JOptionPane.showMessageDialog(component,"错误：文件不存在\n"+exception.getMessage(),"用户不存在", JOptionPane.ERROR_MESSAGE);
             }
+            default -> {
+                ConsoleLog.log("ERROR: "+exception.getClass().getName());
+                ConsoleLog.log(exception.toString());
+            }
         }
     }
 }
